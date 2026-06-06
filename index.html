@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AmeriSpeak — American English Coach</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-container"></div>
+
+<div class="page">
+
+  <!-- Hero -->
+  <div style="margin-bottom:2.5rem">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 class="section-heading">Welcome back, Ash! 👋</h1>
+        <p class="section-sub">Your 6-month journey to sounding like a natural American. Keep going!</p>
+      </div>
+      <div id="voice-bar-home" class="voice-bar" style="max-width:380px;flex:1">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--accent)" style="flex-shrink:0"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        <span>Voice:</span>
+        <select class="voice-select" style="flex:1;max-width:180px"></select>
+        <span>Speed:</span>
+        <input type="range" id="rate-home" min="0.6" max="1.2" step="0.1" value="0.88">
+        <span id="rate-label-home" style="min-width:32px;font-size:12px">0.9×</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-box"><div class="stat-n" id="stat-days">0</div><div class="stat-l">Days Done</div></div>
+    <div class="stat-box"><div class="stat-n" id="stat-words">0</div><div class="stat-l">Words Learned</div></div>
+    <div class="stat-box"><div class="stat-n" id="stat-streak">0</div><div class="stat-l">Day Streak</div></div>
+    <div class="stat-box"><div class="stat-n" id="stat-xp">0</div><div class="stat-l">Total XP</div></div>
+    <div class="stat-box"><div class="stat-n" id="stat-quiz">0%</div><div class="stat-l">Quiz Avg</div></div>
+  </div>
+
+  <!-- Overall progress -->
+  <div class="card mb-16" style="margin-bottom:1.5rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:14px;font-weight:600;color:var(--text)">6-Month Progress</span>
+      <span id="progress-pct" style="font-size:13px;color:var(--text2)">0 / 180 days</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="main-progress" style="width:0%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px">
+      <span style="font-size:11px;color:var(--text3)">Start</span>
+      <span style="font-size:11px;color:var(--text3)">Month 3</span>
+      <span style="font-size:11px;color:var(--text3)">Goal: 180 days</span>
+    </div>
+  </div>
+
+  <!-- Today's words -->
+  <div style="margin-bottom:2rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 style="font-size:18px;font-weight:600;color:var(--text)">Today's Words</h2>
+      <a href="learn.html" class="btn btn-ghost" style="font-size:13px;padding:6px 14px">See all words →</a>
+    </div>
+    <div class="grid-2" id="today-words"></div>
+  </div>
+
+  <!-- Category overview -->
+  <div style="margin-bottom:2rem">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 style="font-size:18px;font-weight:600;color:var(--text)">Categories</h2>
+      <a href="learn.html" class="btn btn-ghost" style="font-size:13px;padding:6px 14px">Browse all →</a>
+    </div>
+    <div class="grid-4" id="cat-grid"></div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="grid-2" style="margin-bottom:2rem">
+    <a href="reading.html" class="card card-hover" style="text-decoration:none;display:block">
+      <div style="font-size:28px;margin-bottom:8px">📖</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">Reading Practice</div>
+      <div style="font-size:13px;color:var(--text2)">Click highlighted words to hear them spoken. Build vocabulary in real context.</div>
+    </a>
+    <a href="quiz.html" class="card card-hover" style="text-decoration:none;display:block">
+      <div style="font-size:28px;margin-bottom:8px">🧠</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">Test Yourself</div>
+      <div style="font-size:13px;color:var(--text2)">Take a quiz on any category and track your score over time.</div>
+    </a>
+  </div>
+
+  <!-- Daily tip -->
+  <div class="card" id="daily-tip" style="border-color:rgba(79,142,247,0.3)">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <div style="font-size:24px;flex-shrink:0">💡</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.04em">Daily Pronunciation Tip</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.6" id="tip-text"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="word-tooltip" class="word-tooltip"></div>
+
+<script src="js/shared.js"></script>
+<script>
+document.getElementById('nav-container').innerHTML = renderNav('index.html');
+Speech.init();
+
+document.getElementById('rate-home').addEventListener('input', function() {
+  Speech.rate = parseFloat(this.value);
+  document.getElementById('rate-label-home').textContent = parseFloat(this.value).toFixed(1) + '×';
+});
+
+const TIPS = [
+  "The American 'R' sound — curl your tongue slightly back without touching the roof of your mouth. Practice: 'car', 'park', 'farmer'. Most Indians say 'caah' — Americans say 'caarr'.",
+  "The 'W' sound starts with rounded lips. Indians often say 'V' instead. Practice: 'water', 'work', 'wine'. Feel your lips press together, then open as air comes out.",
+  "Americans reduce unstressed vowels to a neutral 'uh' sound called schwa. 'About' is 'uh-BOUT', 'sofa' is 'SOH-fuh'. This makes speech sound more natural and faster.",
+  "Linking words: Americans run words together. 'Want to' becomes 'wanna', 'going to' becomes 'gonna', 'did you' becomes 'didja'. This is not lazy — it is natural American speech.",
+  "Rising intonation at the end of a statement can sound like a question in American English — avoid it. Falling intonation signals confidence and clarity to American listeners.",
+  "The 'TH' sound — place your tongue lightly between your teeth. 'The', 'that', 'this'. Indians often replace this with 'D' or 'T'. Slow practice: 'the', 'they', 'though'.",
+  "Word stress changes meaning: 'PREsent' (noun) vs 'preSENT' (verb). 'REcord' vs 'reCORD'. Americans use stress to distinguish words — pay attention to which syllable is louder."
+];
+
+function renderStats() {
+  const p = getProgress();
+  document.getElementById('stat-days').textContent = p.completedDays.length;
+  document.getElementById('stat-words').textContent = p.completedDays.length * 2;
+  document.getElementById('stat-streak').textContent = p.streak;
+  document.getElementById('stat-xp').textContent = p.xp;
+  const scores = Store.get('quizScores', []);
+  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+  document.getElementById('stat-quiz').textContent = avg + '%';
+
+  const done = p.completedDays.length;
+  document.getElementById('progress-pct').textContent = done + ' / 180 days';
+  document.getElementById('main-progress').style.width = Math.round((done/180)*100) + '%';
+  updateNavBadges();
+}
+
+function renderTodayWords() {
+  const today = new Date().getDay();
+  const idx = (today * 2) % VOCAB.length;
+  const words = [VOCAB[idx], VOCAB[(idx+1) % VOCAB.length]];
+  const container = document.getElementById('today-words');
+  container.innerHTML = words.map(w => {
+    const c = CATS[w.cat];
+    return `<div class="word-card">
+      <div class="wc-num">Today · ${c.icon} ${c.label}</div>
+      <div class="wc-word">${w.word}</div>
+      <div class="wc-ph">${w.ph}</div>
+      <span class="badge ${c.color} wc-pos">${w.pos}</span>
+      <div class="wc-def mt-8">${w.def}</div>
+      <div class="wc-sent mt-8">"${w.use}"</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        ${makeSpeakBtn(w.word, '🔊 Word')}
+        ${makeSpeakBtn(w.use, '💬 Sentence')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCatGrid() {
+  const container = document.getElementById('cat-grid');
+  container.innerHTML = Object.entries(CATS).map(([key, c]) => {
+    const count = VOCAB.filter(v => v.cat === key).length;
+    return `<a href="learn.html?cat=${key}" class="card card-hover" style="text-decoration:none;padding:1rem;text-align:center">
+      <div style="font-size:22px;margin-bottom:6px">${c.icon}</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">${c.label}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${count} words</div>
+    </a>`;
+  }).join('');
+}
+
+function renderTip() {
+  const day = new Date().getDay();
+  document.getElementById('tip-text').textContent = TIPS[day % TIPS.length];
+}
+
+renderStats();
+renderTodayWords();
+renderCatGrid();
+renderTip();
+</script>
+</body>
+</html>

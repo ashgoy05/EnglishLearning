@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz — AmeriSpeak</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.quiz-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 2rem;
+  max-width: 680px; margin: 0 auto;
+}
+.quiz-word {
+  font-family: 'Sora', sans-serif;
+  font-size: 36px; font-weight: 700; color: var(--text);
+  margin-bottom: 6px; text-align: center;
+}
+.quiz-ph { font-size: 15px; color: var(--text3); font-style: italic; text-align: center; margin-bottom: 1.5rem; }
+.quiz-q  { font-size: 16px; font-weight: 500; color: var(--text2); text-align: center; margin-bottom: 1.5rem; }
+.score-circle {
+  width: 120px; height: 120px; border-radius: 50%;
+  border: 4px solid var(--accent);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+.score-n { font-size: 32px; font-weight: 700; color: var(--text); font-family: 'Sora', sans-serif; }
+.score-l { font-size: 12px; color: var(--text3); }
+.history-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.mode-card {
+  padding: 1.25rem; background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--radius); cursor: pointer; transition: all 0.15s;
+  text-align: center;
+}
+.mode-card:hover { border-color: var(--accent); background: var(--bg3); }
+.mode-card.selected { border-color: var(--accent); background: rgba(79,142,247,0.08); }
+</style>
+</head>
+<body>
+<div id="nav-container"></div>
+
+<div class="page-sm">
+
+  <!-- Setup screen -->
+  <div id="screen-setup">
+    <div style="margin-bottom:1.5rem">
+      <h1 class="section-heading">Vocabulary Quiz</h1>
+      <p class="section-sub">Test yourself on any category. Earn XP and track your score history.</p>
+    </div>
+
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">Choose category</div>
+      <div class="cat-tabs" id="quiz-cat-tabs">
+        <button class="cat-tab active" onclick="selectQuizCat('all',this)">🌟 All Categories</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">Quiz mode</div>
+      <div class="grid-2" id="mode-grid">
+        <div class="mode-card selected" onclick="selectMode('meaning',this)">
+          <div style="font-size:22px;margin-bottom:6px">📝</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Meaning</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">Hear the word, choose its definition</div>
+        </div>
+        <div class="mode-card" onclick="selectMode('word',this)">
+          <div style="font-size:22px;margin-bottom:6px">🔤</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Word</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">See the definition, find the word</div>
+        </div>
+        <div class="mode-card" onclick="selectMode('sentence',this)">
+          <div style="font-size:22px;margin-bottom:6px">💬</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Sentence</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">Fill in the blank in a real sentence</div>
+        </div>
+        <div class="mode-card" onclick="selectMode('category',this)">
+          <div style="font-size:22px;margin-bottom:6px">🏷️</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text)">Category</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">Which category does this word belong to?</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">Number of questions</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${[5,10,15,20].map(n => `<button class="cat-tab ${n===10?'active':''}" onclick="selectQCount(${n},this)">${n} questions</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="voice-bar" style="margin-bottom:1.5rem">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--accent)"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+      <select class="voice-select" style="flex:1;max-width:200px"></select>
+      <span>Speed:</span>
+      <input type="range" id="rate-quiz" min="0.6" max="1.2" step="0.1" value="0.9" style="width:70px">
+      <span id="rate-lbl" style="font-size:12px;min-width:30px">0.9×</span>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:16px" onclick="startQuiz()">
+      Start Quiz →
+    </button>
+
+    <!-- History -->
+    <div id="quiz-history" style="margin-top:2rem"></div>
+  </div>
+
+  <!-- Quiz screen -->
+  <div id="screen-quiz" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+      <button class="btn btn-ghost" onclick="endQuiz()" style="padding:6px 14px;font-size:13px">← Exit</button>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:13px;color:var(--text2)" id="q-counter">1 / 10</span>
+        <span style="font-size:13px;color:var(--green)" id="q-score-live">Score: 0</span>
+      </div>
+    </div>
+    <div class="progress-track" style="margin-bottom:1.5rem">
+      <div class="progress-fill" id="q-progress" style="width:0%"></div>
+    </div>
+    <div class="quiz-card" id="quiz-card"></div>
+  </div>
+
+  <!-- Results screen -->
+  <div id="screen-results" style="display:none">
+    <div class="quiz-card" id="results-card" style="max-width:100%"></div>
+  </div>
+
+</div>
+
+<script src="js/shared.js"></script>
+<script>
+document.getElementById('nav-container').innerHTML = renderNav('quiz.html');
+Speech.init();
+document.getElementById('rate-quiz').addEventListener('input', function() {
+  Speech.rate = parseFloat(this.value);
+  document.getElementById('rate-lbl').textContent = parseFloat(this.value).toFixed(1) + '×';
+});
+
+let quizCat = 'all';
+let quizMode = 'meaning';
+let qCount = 10;
+let quizState = { qs: [], idx: 0, score: 0, wrong: [] };
+
+// Build cat tabs
+const catTabsEl = document.getElementById('quiz-cat-tabs');
+Object.entries(CATS).forEach(([key, c]) => {
+  const btn = document.createElement('button');
+  btn.className = 'cat-tab';
+  btn.textContent = c.icon + ' ' + c.label;
+  btn.onclick = () => selectQuizCat(key, btn);
+  catTabsEl.appendChild(btn);
+});
+
+function selectQuizCat(cat, btn) {
+  quizCat = cat;
+  document.querySelectorAll('#quiz-cat-tabs .cat-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function selectMode(mode, el) {
+  quizMode = mode;
+  document.querySelectorAll('#mode-grid .mode-card').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectQCount(n, btn) {
+  qCount = n;
+  document.querySelectorAll('#screen-setup .cat-tab').forEach(b => {
+    if ([5,10,15,20].map(String).includes(b.textContent.replace(' questions',''))) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+}
+
+function buildQuestions() {
+  let pool = VOCAB.filter(w => quizCat === 'all' || w.cat === quizCat);
+  if (pool.length < 4) pool = VOCAB;
+  pool = pool.sort(() => Math.random() - 0.5).slice(0, Math.min(qCount, pool.length));
+  return pool.map(w => buildQuestion(w, pool));
+}
+
+function buildQuestion(w, pool) {
+  if (quizMode === 'meaning') {
+    const wrong = pool.filter(v => v.id !== w.id).sort(() => Math.random() - 0.5).slice(0, 3).map(v => v.def);
+    const opts = shuffle([w.def, ...wrong]);
+    return { word: w, type: 'meaning', prompt: `What does "${w.word}" mean?`, opts, answer: w.def };
+  }
+  if (quizMode === 'word') {
+    const wrong = pool.filter(v => v.id !== w.id).sort(() => Math.random() - 0.5).slice(0, 3).map(v => v.word);
+    const opts = shuffle([w.word, ...wrong]);
+    return { word: w, type: 'word', prompt: w.def, opts, answer: w.word };
+  }
+  if (quizMode === 'sentence') {
+    const blanked = w.use.replace(new RegExp(w.word, 'gi'), '________');
+    const wrong = pool.filter(v => v.id !== w.id).sort(() => Math.random() - 0.5).slice(0, 3).map(v => v.word);
+    const opts = shuffle([w.word, ...wrong]);
+    return { word: w, type: 'sentence', prompt: blanked, opts, answer: w.word };
+  }
+  if (quizMode === 'category') {
+    const wrongCats = Object.keys(CATS).filter(c => c !== w.cat).sort(() => Math.random() - 0.5).slice(0, 3);
+    const opts = shuffle([CATS[w.cat].label, ...wrongCats.map(c => CATS[c].label)]);
+    return { word: w, type: 'category', prompt: `"${w.word}" — which category does this belong to?`, opts, answer: CATS[w.cat].label };
+  }
+}
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function startQuiz() {
+  const qs = buildQuestions();
+  quizState = { qs, idx: 0, score: 0, wrong: [] };
+  document.getElementById('screen-setup').style.display = 'none';
+  document.getElementById('screen-results').style.display = 'none';
+  document.getElementById('screen-quiz').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const { qs, idx, score } = quizState;
+  if (idx >= qs.length) { showResults(); return; }
+  const q = qs[idx];
+  const pct = Math.round((idx / qs.length) * 100);
+  document.getElementById('q-counter').textContent = (idx + 1) + ' / ' + qs.length;
+  document.getElementById('q-score-live').textContent = 'Score: ' + score;
+  document.getElementById('q-progress').style.width = pct + '%';
+
+  const btnId = 'qspeak_' + idx;
+  const card = document.getElementById('quiz-card');
+  const catInfo = CATS[q.word.cat];
+
+  let topHTML = '';
+  if (q.type === 'meaning') {
+    topHTML = `<div style="text-align:center;margin-bottom:1rem">
+      <span class="badge ${catInfo.color}" style="margin-bottom:10px;display:inline-block">${catInfo.icon} ${catInfo.label}</span>
+      <div class="quiz-word">${q.word.word}</div>
+      <div class="quiz-ph">${q.word.ph}</div>
+      <button class="speak-btn" id="${btnId}" onclick="Speech.speak('${q.word.word.replace(/'/g,"\\'")}', document.getElementById('${btnId}'))" style="margin:0 auto">
+        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        Hear it
+      </button>
+    </div>`;
+  } else if (q.type === 'sentence') {
+    topHTML = `<div class="quiz-q" style="background:var(--bg3);padding:14px;border-radius:var(--radius-sm);font-size:15px;line-height:1.7">"${q.prompt}"</div>`;
+  } else {
+    topHTML = `<div class="quiz-q">${q.prompt}</div>`;
+  }
+
+  const optsHTML = q.opts.map((opt, i) => {
+    const shortOpt = opt.length > 100 ? opt.substring(0, 100) + '...' : opt;
+    return `<button class="quiz-opt" id="opt_${i}" onclick="answerQuestion(${i})">${shortOpt}</button>`;
+  }).join('');
+
+  card.innerHTML = topHTML + `<div class="quiz-grid">${optsHTML}</div><div id="qfb"></div>`;
+
+  // Auto-speak in meaning mode
+  if (q.type === 'meaning') {
+    setTimeout(() => Speech.speak(q.word.word, document.getElementById(btnId)), 300);
+  }
+}
+
+let answered = false;
+function answerQuestion(i) {
+  if (answered) return;
+  answered = true;
+  const { qs, idx } = quizState;
+  const q = qs[idx];
+  const chosen = q.opts[i];
+  const correct = chosen === q.answer;
+  if (correct) quizState.score++;
+  else quizState.wrong.push(q.word);
+
+  q.opts.forEach((_, j) => {
+    const btn = document.getElementById('opt_' + j);
+    if (q.opts[j] === q.answer) btn.classList.add('correct');
+    else if (j === i && !correct) btn.classList.add('wrong');
+    btn.disabled = true;
+  });
+
+  const sid = 'fbspeak_' + idx;
+  const fb = document.getElementById('qfb');
+  fb.innerHTML = `
+    <div style="padding:10px 14px;border-radius:var(--radius-sm);background:${correct ? 'rgba(52,211,153,0.1)' : 'rgba(248,113,113,0.1)'};border:1px solid ${correct ? 'rgba(52,211,153,0.3)' : 'rgba(248,113,113,0.3)'};color:${correct ? 'var(--green)' : 'var(--red)'};font-size:13px;margin-bottom:12px">
+      ${correct ? '✓ Correct! +1 point' : `✗ The answer is: ${q.answer}`}
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="speak-btn" id="${sid}" onclick="Speech.speak('${q.word.use.replace(/'/g,"\\'")}', document.getElementById('${sid}'))">
+        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        Hear in a sentence
+      </button>
+      <button class="btn btn-primary" onclick="nextQuestion()" style="margin-left:auto;padding:8px 20px">
+        ${idx + 1 < qs.length ? 'Next →' : 'See Results →'}
+      </button>
+    </div>`;
+}
+
+function nextQuestion() {
+  answered = false;
+  quizState.idx++;
+  renderQuestion();
+}
+
+function showResults() {
+  document.getElementById('screen-quiz').style.display = 'none';
+  document.getElementById('screen-results').style.display = 'block';
+
+  const { qs, score, wrong } = quizState;
+  const pct = Math.round((score / qs.length) * 100);
+  const xpEarned = score * 5;
+  const grade = pct >= 90 ? '🎉 Outstanding!' : pct >= 75 ? '🌟 Great job!' : pct >= 60 ? '👍 Good effort!' : '📚 Keep practicing!';
+
+  // Save score
+  const scores = Store.get('quizScores', []);
+  scores.push(pct);
+  if (scores.length > 20) scores.shift();
+  Store.set('quizScores', scores);
+
+  // Update XP
+  const p = getProgress();
+  p.xp = (p.xp || 0) + xpEarned;
+  saveProgress(p);
+  updateNavBadges();
+
+  // Quiz history
+  const history = Store.get('quizHistory', []);
+  history.unshift({ date: new Date().toLocaleDateString(), score: pct, cat: quizCat, mode: quizMode, n: qs.length });
+  if (history.length > 10) history.pop();
+  Store.set('quizHistory', history);
+
+  const wrongHTML = wrong.length ? `
+    <div style="margin-top:1.5rem">
+      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">📌 Review these words</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">
+        ${wrong.slice(0,6).map(w => {
+          const rid = 'rbtn_' + w.id;
+          return `<div class="card card-sm" style="border-color:rgba(248,113,113,0.3)">
+            <div style="display:flex;justify-content:space-between">
+              <div style="font-size:14px;font-weight:600;color:var(--text)">${w.word}</div>
+              <button class="speak-btn" id="${rid}" onclick="Speech.speak('${w.word.replace(/'/g,"\\'")}', document.getElementById('${rid}'))">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+              </button>
+            </div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.4">${w.def}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '<div style="margin-top:1rem;font-size:14px;color:var(--green)">🎯 Perfect score — no words to review!</div>';
+
+  document.getElementById('results-card').innerHTML = `
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:28px;margin-bottom:8px">${grade}</div>
+      <div class="score-circle" style="border-color:${pct>=75?'var(--green)':pct>=50?'var(--amber)':'var(--red)'}">
+        <div class="score-n">${pct}%</div>
+        <div class="score-l">${score}/${qs.length}</div>
+      </div>
+      <div style="font-size:14px;color:var(--amber)">+${xpEarned} XP earned</div>
+    </div>
+    ${wrongHTML}
+    <div style="display:flex;gap:10px;margin-top:1.5rem;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="startQuiz()" style="flex:1;justify-content:center">Try Again</button>
+      <button class="btn btn-ghost" onclick="endQuiz()" style="flex:1;justify-content:center">← Back to Setup</button>
+    </div>`;
+}
+
+function endQuiz() {
+  answered = false;
+  document.getElementById('screen-quiz').style.display = 'none';
+  document.getElementById('screen-results').style.display = 'none';
+  document.getElementById('screen-setup').style.display = 'block';
+  renderHistory();
+}
+
+function renderHistory() {
+  const history = Store.get('quizHistory', []);
+  const el = document.getElementById('quiz-history');
+  if (!history.length) { el.innerHTML = ''; return; }
+  const avg = Math.round(history.reduce((a,b)=>a+b.score,0)/history.length);
+  el.innerHTML = `<div style="margin-top:1rem">
+    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">Recent Quiz History (avg: ${avg}%)</div>
+    ${history.map(h => `<div class="history-row">
+      <span style="color:var(--text2)">${h.date}</span>
+      <span style="color:var(--text2)">${h.cat === 'all' ? 'All categories' : (CATS[h.cat]?.label || h.cat)} · ${h.mode}</span>
+      <span style="font-weight:600;color:${h.score>=75?'var(--green)':h.score>=50?'var(--amber)':'var(--red)'}">${h.score}%</span>
+    </div>`).join('')}
+  </div>`;
+}
+
+renderHistory();
+updateNavBadges();
+</script>
+</body>
+</html>

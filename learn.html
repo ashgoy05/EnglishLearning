@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn Words — AmeriSpeak</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="nav-container"></div>
+
+<div class="page">
+
+  <div style="margin-bottom:1.5rem">
+    <h1 class="section-heading">Learn Words</h1>
+    <p class="section-sub">180 words across 13 categories. Tap 🔊 to hear any word or sentence.</p>
+  </div>
+
+  <!-- Voice bar -->
+  <div class="voice-bar" style="margin-bottom:1.25rem">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--accent)"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+    <span>Voice:</span>
+    <select class="voice-select" style="flex:1;max-width:200px"></select>
+    <span>Speed:</span>
+    <input type="range" id="rate-learn" min="0.6" max="1.2" step="0.1" value="0.88" style="width:70px">
+    <span id="rate-label-learn" style="font-size:12px;min-width:30px">0.9×</span>
+    <button class="speak-btn" onclick="Speech.speak('Hello! I am your American English voice coach. Let us start learning together!', this)">
+      <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+      Test voice
+    </button>
+  </div>
+
+  <!-- Search -->
+  <div style="position:relative;margin-bottom:1.25rem">
+    <input type="text" id="search-input" placeholder="Search any word..." 
+      style="width:100%;padding:10px 16px 10px 40px;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:14px;outline:none"
+      oninput="filterWords()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--text3)" style="position:absolute;left:13px;top:50%;transform:translateY(-50%)"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+  </div>
+
+  <!-- Category tabs -->
+  <div class="cat-tabs" id="cat-tabs">
+    <button class="cat-tab active" onclick="selectCat('all', this)">🌟 All</button>
+  </div>
+
+  <!-- Word count -->
+  <div style="font-size:13px;color:var(--text3);margin-bottom:1.25rem" id="word-count"></div>
+
+  <!-- Words grid -->
+  <div class="grid-2" id="words-grid"></div>
+
+  <!-- Mark done section -->
+  <div style="margin-top:2rem;text-align:center;padding:1.5rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius)">
+    <div style="font-size:14px;color:var(--text2);margin-bottom:1rem">Finished studying today's words?</div>
+    <button class="btn btn-primary" onclick="markDone()">✓ Mark Today as Complete (+20 XP)</button>
+    <div id="done-msg" style="margin-top:10px;font-size:13px;color:var(--green);display:none">✓ Great work! Today marked as complete.</div>
+  </div>
+
+</div>
+
+<script src="js/shared.js"></script>
+<script>
+document.getElementById('nav-container').innerHTML = renderNav('learn.html');
+Speech.init();
+
+document.getElementById('rate-learn').addEventListener('input', function() {
+  Speech.rate = parseFloat(this.value);
+  document.getElementById('rate-label-learn').textContent = parseFloat(this.value).toFixed(1) + '×';
+});
+
+let currentCat = 'all';
+let searchTerm = '';
+
+// Build cat tabs
+const tabsEl = document.getElementById('cat-tabs');
+Object.entries(CATS).forEach(([key, c]) => {
+  const btn = document.createElement('button');
+  btn.className = 'cat-tab';
+  btn.textContent = c.icon + ' ' + c.label;
+  btn.onclick = () => selectCat(key, btn);
+  tabsEl.appendChild(btn);
+});
+
+// Check URL param
+const urlCat = new URLSearchParams(window.location.search).get('cat');
+if (urlCat && CATS[urlCat]) {
+  currentCat = urlCat;
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  [...tabsEl.children].find(b => b.onclick.toString().includes(`'${urlCat}'`))?.classList.add('active');
+}
+
+function selectCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderWords();
+}
+
+function filterWords() {
+  searchTerm = document.getElementById('search-input').value.toLowerCase();
+  renderWords();
+}
+
+function renderWords() {
+  let words = VOCAB.filter(w => {
+    const matchCat = currentCat === 'all' || w.cat === currentCat;
+    const matchSearch = !searchTerm || w.word.toLowerCase().includes(searchTerm) || w.def.toLowerCase().includes(searchTerm);
+    return matchCat && matchSearch;
+  });
+
+  document.getElementById('word-count').textContent = words.length + ' words' + (currentCat !== 'all' ? ' in ' + CATS[currentCat]?.label : '');
+
+  document.getElementById('words-grid').innerHTML = words.map((w, i) => {
+    const c = CATS[w.cat];
+    const btnId = 'btn_' + w.id;
+    const sId = 'sbtn_' + w.id;
+    return `<div class="word-card" id="wc_${w.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <span class="wc-num">${c.icon} ${c.label}</span>
+        <span style="font-size:11px;color:var(--text3)">#${(i+1).toString().padStart(3,'0')}</span>
+      </div>
+      <div class="wc-word">${w.word}</div>
+      <div class="wc-ph">${w.ph}</div>
+      <span class="badge ${c.color} wc-pos">${w.pos}</span>
+      <div class="wc-def mt-8">${w.def}</div>
+      <div class="wc-sent mt-8">"${w.use}"</div>
+      <div style="margin-top:4px">
+        <div class="wc-tip-label">💡 American tip</div>
+        <div class="wc-tip">${w.tip || 'Practice this word in conversation today!'}</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="speak-btn" id="${btnId}" onclick="Speech.speak('${w.word.replace(/'/g,"\\'")}', document.getElementById('${btnId}'))">
+          <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+          Hear word
+        </button>
+        <button class="speak-btn" id="${sId}" onclick="Speech.speak('${w.use.replace(/'/g,"\\'")}', document.getElementById('${sId}'))">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+          Hear sentence
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function markDone() {
+  const p = getProgress();
+  const today = new Date().toISOString().split('T')[0];
+  if (!p.completedDays.includes(today)) {
+    p.completedDays.push(today);
+    p.xp += 20;
+    // streak
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    p.streak = p.completedDays.includes(yesterday) ? p.streak + 1 : 1;
+    saveProgress(p);
+  }
+  document.getElementById('done-msg').style.display = 'block';
+  updateNavBadges();
+}
+
+renderWords();
+updateNavBadges();
+</script>
+</body>
+</html>

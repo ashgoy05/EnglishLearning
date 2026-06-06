@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reading Practice — AmeriSpeak</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+.passage-body { font-size:16px; line-height:2.2; color:var(--text); }
+.passage-body .kw {
+  color: var(--accent);
+  border-bottom: 1px dashed rgba(79,142,247,0.6);
+  cursor: pointer;
+  transition: all 0.12s;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+.passage-body .kw:hover { background:rgba(79,142,247,0.15); border-bottom-color:var(--accent); }
+.passage-body .kw.playing { background:rgba(79,142,247,0.2); color:#fff; border-bottom-color:#fff; }
+.tooltip-box {
+  position: fixed; z-index: 9999;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 12px 16px;
+  max-width: 300px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  pointer-events: none; display: none;
+}
+.tooltip-box.show { display: block; }
+.tt-word { font-size:16px;font-weight:700;color:var(--text);font-family:'Sora',sans-serif; }
+.tt-ph   { font-size:12px;color:var(--text3);font-style:italic;margin-top:1px; }
+.tt-pos  { display:inline-block;margin:5px 0; }
+.tt-def  { font-size:13px;color:var(--text2);line-height:1.5; }
+.read-controls {
+  display: flex; gap: 10px; align-items: center;
+  flex-wrap: wrap; margin-bottom: 1.5rem;
+}
+.passage-nav { display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem; }
+.pnav-btn {
+  padding:7px 16px; border-radius:var(--radius-sm); font-size:13px;font-weight:500;
+  border:1px solid var(--border2); background:var(--bg2); color:var(--text2); cursor:pointer;
+  transition:all 0.15s;
+}
+.pnav-btn:hover { color:var(--text); background:var(--bg3); }
+.pnav-btn.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+.read-all-btn {
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px;background:rgba(79,142,247,0.1);border:1px solid rgba(79,142,247,0.3);
+  border-radius:var(--radius-sm);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;
+  transition:all 0.15s;
+}
+.read-all-btn:hover { background:rgba(79,142,247,0.2); }
+.word-legend { display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2); }
+.kw-sample { color:var(--accent);border-bottom:1px dashed rgba(79,142,247,0.6);padding:0 4px; }
+</style>
+</head>
+<body>
+<div id="nav-container"></div>
+
+<div class="page-sm">
+
+  <div style="margin-bottom:1.5rem">
+    <h1 class="section-heading">Reading Practice</h1>
+    <p class="section-sub">Read real American English passages. Click any <span class="kw-sample">highlighted word</span> to see its meaning and hear it spoken.</p>
+  </div>
+
+  <!-- Voice bar -->
+  <div class="voice-bar" style="margin-bottom:1.25rem">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--accent)"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+    <select class="voice-select" style="flex:1;max-width:200px"></select>
+    <span>Speed:</span>
+    <input type="range" id="rate-read" min="0.5" max="1.1" step="0.05" value="0.82" style="width:70px">
+    <span id="rate-label-read" style="font-size:12px;min-width:30px">0.8×</span>
+  </div>
+
+  <!-- Passage selector -->
+  <div class="passage-nav" id="passage-nav"></div>
+
+  <!-- Passage display -->
+  <div class="reading-passage" id="passage-area">
+    <div style="text-align:center;padding:2rem;color:var(--text3)">Select a passage above to begin reading.</div>
+  </div>
+
+  <!-- Word glossary for current passage -->
+  <div id="glossary-area"></div>
+
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip-box" id="tooltip"></div>
+
+<script src="js/shared.js"></script>
+<script>
+document.getElementById('nav-container').innerHTML = renderNav('reading.html');
+Speech.init();
+document.getElementById('rate-read').addEventListener('input', function() {
+  Speech.rate = parseFloat(this.value);
+  document.getElementById('rate-label-read').textContent = parseFloat(this.value).toFixed(1) + '×';
+});
+
+const PASSAGES = [
+  {
+    id: 'grocery',
+    title: 'A Trip to the American Grocery Store',
+    level: 'Beginner',
+    cat: 'Everyday Life',
+    keywords: ['produce','aisle','deli','coupon','generic','bulk','expiration date','self-checkout','loyalty card','cart'],
+    body: `Going to an American grocery store for the first time can feel a little overwhelming. The stores are much larger than what you may be used to back home. The first thing you will notice when you walk in is the produce section — a colorful display of fresh fruits and vegetables right by the entrance. Americans love to shop the produce section first because it sets a healthy tone for the whole trip.
+
+As you push your cart deeper into the store, you will find that every item has its own aisle. The aisle signs hanging from the ceiling tell you what is in each row. If you are looking for pasta, check the pasta aisle, usually around aisle seven or eight in most Kroger and Schnucks locations here in St. Louis.
+
+One of the best strategies for saving money is to check the weekly flyer for coupons before you shop. Many stores also have a loyalty card program — swipe your card at checkout and you automatically get the member price on hundreds of items. Another money-saving tip is to buy staples like rice, oil, and lentils in bulk from Costco. The unit price per pound is much lower when you buy larger quantities.
+
+When choosing between brands, do not overlook the generic store brand. Generic products are held to the same safety standards as name brands and typically cost thirty to fifty percent less. Always check the expiration date on dairy, meat, and bread before putting anything in your cart.
+
+When you are done shopping, head to the checkout. If you have fewer than fifteen items, the self-checkout lane is usually much faster on busy weekends. On your way out, do not forget to ask at the customer service desk about the deli counter — freshly sliced deli meats and cheeses are far better than the pre-packaged versions.`
+  },
+  {
+    id: 'work',
+    title: 'Your First Week at an American Office',
+    level: 'Intermediate',
+    cat: 'Tech & Work',
+    keywords: ['onboarding','sync up','bandwidth','ping','deep dive','stakeholder','workaround','iterate','sprint','agile'],
+    body: `Starting a new job in an American office is exciting but it comes with its own learning curve. The first week is typically called onboarding — a structured process where HR walks you through benefits, policies, and sets up your accounts. Do not be surprised if onboarding takes two full days. Americans take it seriously.
+
+On your first real work day, your manager will likely want to sync up with you one-on-one to set expectations. This is your chance to ask questions and understand your role clearly. Pay attention to how your team communicates. Most tech companies use Slack heavily — people will ping you throughout the day with quick questions and updates. Respond promptly, but do not feel pressured to answer instantly.
+
+American work culture often revolves around capacity and priorities. When a colleague says they do not have the bandwidth for something, they are not being lazy — they are simply at full capacity with their current commitments. Respect this boundary and do the same when you are overloaded.
+
+Many teams work in an agile way, running two-week sprints where you commit to a specific set of tasks and deliver them by the end of the cycle. There will be a daily standup meeting — usually fifteen minutes — where everyone shares what they did yesterday, what they are doing today, and whether anything is blocking them.
+
+When you encounter a bug or process issue, you may need to find a workaround until the permanent fix is ready. Document your workarounds clearly so the team can iterate toward a better solution. And when your manager asks you to do a deep dive on a topic, they want thorough analysis — not just a surface summary.
+
+The most important thing in your first week is to build relationships with your stakeholders. Take people to coffee. Ask questions. Americans genuinely appreciate curiosity and initiative in new team members.`
+  },
+  {
+    id: 'health',
+    title: 'Navigating American Healthcare',
+    level: 'Intermediate',
+    cat: 'Medical',
+    keywords: ['copay','deductible','in-network','PCP','referral','urgent care','prescription','OTC','follow-up','out-of-pocket'],
+    body: `American healthcare can be confusing for newcomers, but understanding a few key terms makes everything much easier to navigate. The most important thing to do when you first arrive is to choose a PCP — a primary care physician — who will be your main doctor for routine checkups and general health concerns.
+
+Before you book any appointment, always confirm that the doctor is in-network with your insurance plan. Seeing an out-of-network doctor can cost you two to three times more than an in-network visit. Your insurance card has a phone number on the back — call it and they will help you find in-network providers near your zip code in Ballwin.
+
+When you visit a doctor, you will usually pay a copay at the front desk before your appointment. This is a flat fee — typically between twenty and fifty dollars — regardless of what care you receive during the visit. Your deductible is separate: it is the total amount you must pay out of pocket for the year before your insurance begins covering a larger share of costs.
+
+If you get sick between regular appointments and cannot wait to see your PCP, go to an urgent care clinic. Urgent care is for non-emergencies like fevers, ear infections, strep throat, or minor injuries. The ER is for genuine emergencies only — going to the ER for a cold will cost hundreds of dollars and take four to six hours.
+
+After a major illness or procedure, your doctor will schedule a follow-up appointment to monitor your recovery. Always attend these. And when your doctor writes you a prescription, you can fill it at any CVS, Walgreens, or Schnucks pharmacy. For minor ailments, ask the pharmacist about OTC options first — many conditions can be treated with over-the-counter medication without a prescription.`
+  },
+  {
+    id: 'driving',
+    title: 'Driving in Missouri and Illinois',
+    level: 'Beginner',
+    cat: 'Driving',
+    keywords: ['merge','yield','carpool','fender bender','right of way','detour','four-way stop','registration','DMV','rush hour'],
+    body: `Driving in Missouri and Illinois is very different from driving in India. The roads are wide, well-marked, and traffic generally moves in an orderly fashion — but there are important rules and customs you need to know to drive safely and confidently.
+
+The first thing to understand is right of way. At a four-way stop, the car that arrives first goes first. If two cars arrive at the same time, the car on the right goes first. At most intersections you must yield to oncoming traffic before making a left turn. Pedestrians always have the right of way at marked crosswalks, and failure to stop can result in a heavy fine.
+
+On the highway, merging is an essential skill. When entering I-270 or I-64, use the on-ramp to build up speed and then merge smoothly into traffic. Use your turn signal every single time you change lanes — it is not optional here. HOV lanes require at least two passengers and are only open during rush hour, typically seven to nine in the morning and four to seven in the evening.
+
+Keep your registration and proof of insurance in your glove compartment at all times. If you are pulled over, calmly hand both documents to the officer along with your license. Missouri requires you to visit the DMV within thirty days of establishing residency to obtain a state license.
+
+If you are involved in a minor fender bender, pull over safely, turn on your hazard lights, and exchange insurance information with the other driver. Do not admit fault at the scene. Call your insurance company afterward.
+
+During winter months, watch for black ice on roads and bridges. If there is ever a detour due to road construction — very common on Manchester Road and Olive Boulevard — follow the detour signs and be patient. And please, never tailgate on the highway. Missouri drivers take this very seriously.`
+  },
+  {
+    id: 'finance',
+    title: 'Building Your Financial Life in America',
+    level: 'Advanced',
+    cat: 'Finance',
+    keywords: ['credit score','APR','direct deposit','W-2','routing number','HSA','401k','overdraft','net pay','capital gains'],
+    body: `Building a strong financial foundation in America starts the moment you open a bank account. Choose a large national bank like Chase, Bank of America, or a local credit union. Give your employer your account and routing number to set up direct deposit — this ensures your paycheck arrives on the exact date it is due, every time, without any manual steps.
+
+Your credit score is one of the most important numbers in your American financial life. Unlike India, where creditworthiness is assessed differently, in the US your FICO score determines the interest rate you pay on a car loan, the apartment you can rent, and eventually the mortgage rate on your home. Build credit by getting a secured credit card, using it for small purchases, and paying the full balance every month. Never pay only the minimum — with a high APR card, carrying a balance can cost you hundreds of dollars in interest annually.
+
+When you start a job, enroll immediately in your company's 401k plan. Contribute at least enough to get the full employer match — this is free money that doubles your contribution. For a household earning ninety thousand dollars, the tax savings from a 401k contribution alone can reduce your tax bill by several thousand dollars each year.
+
+If you have a high-deductible health plan, open an HSA — a health savings account. This account is triple tax-advantaged: your contributions are tax-deductible, the money grows tax-free, and withdrawals for medical expenses are tax-free. It is one of the best financial tools available to Americans and is often overlooked by new immigrants.
+
+In January each year, your employer will mail you a W-2 form showing your total earnings and taxes withheld. Use this to file your federal and Missouri state tax return before the April fifteenth deadline. If you sold any stocks at a profit, you may owe capital gains tax. Hold positions for over one year to qualify for the lower long-term capital gains rate.
+
+The goal is simple: no overdrafts, strong credit, maximum employer match, and consistent investment every month.`
+  },
+  {
+    id: 'idioms',
+    title: 'American Idioms in Everyday Conversation',
+    level: 'Advanced',
+    cat: 'Idioms',
+    keywords: ['bite the bullet','break the ice','hit the nail on the head','spill the beans','under the weather','on the same page','back to square one','the elephant in the room','burning the midnight oil','hit the ground running'],
+    body: `American English is full of colorful idioms that can leave newcomers completely puzzled. These phrases are used constantly in offices, homes, and social settings — and understanding them will make you sound far more natural and fluent in everyday conversation.
+
+Imagine you have just joined a new team. On your first day, your manager wants everyone to feel comfortable so she organizes a fun icebreaker game to help break the ice. The exercises work and by lunch everyone is chatting freely. Your manager then pulls you aside and says, "You really hit the nail on the head during the morning session — your analysis was exactly right."
+
+A few weeks later your team is planning a surprise birthday party for a colleague named Mike. You accidentally mention it to him in the hallway without thinking, completely spilling the beans. Mike laughs it off, but your coworkers are not thrilled.
+
+Come March, your project is falling behind schedule. You have been burning the midnight oil every night this week trying to catch up. Your manager reassures you: "Sometimes you have to bite the bullet and just push through the tough stretch." He adds that the team needs to make sure everyone is on the same page before the client presentation on Friday.
+
+Unfortunately the presentation does not go well. The client rejects your entire proposal and you are back to square one. But instead of panicking, your team addresses the elephant in the room directly — the budget was simply too low for what the client actually wanted. Everyone appreciates the honesty.
+
+A new developer joins the team the following week and hits the ground running immediately. Within her first two days she had already resolved three open bugs. You overhear her manager say, "She is a natural — really knows how to deliver results right out of the gate."
+
+As you drive home that evening you realize you have been using these idioms naturally all day without even thinking about it. That is the moment you know you are truly learning American English.`
+  },
+  {
+    id: 'weather',
+    title: 'Surviving a St. Louis Summer and Winter',
+    level: 'Beginner',
+    cat: 'Weather',
+    keywords: ['wind chill','heat index','tornado warning','tornado watch','black ice','humidity','overcast','sleet','arctic blast','partly cloudy'],
+    body: `If you live in St. Louis or anywhere in the Midwest, you quickly learn that the weather here is genuinely unpredictable. The old joke goes that if you do not like the weather in St. Louis, just wait five minutes — it will change completely.
+
+Summers in St. Louis are brutal. The temperature regularly hits the mid-nineties in July and August, but what makes it truly uncomfortable is the humidity. Even when the thermometer reads ninety degrees, the heat index — which accounts for moisture in the air — can make it feel like one hundred and five. On days like these, stay hydrated, limit outdoor activity between noon and four in the afternoon, and never leave children or pets in a parked car.
+
+Thunderstorm season runs from late spring through early fall. If you hear the term tornado watch, it means conditions are favorable for tornado development — be alert and have a plan but no storm has been confirmed yet. A tornado warning is a different and much more serious situation: a tornado has actually been spotted or confirmed by Doppler radar. When a warning is issued, go immediately to your basement or an interior room with no windows. The sirens you hear outside are the tornado warning sirens — take them seriously every single time.
+
+Winters bring a different set of challenges. An arctic blast can drop temperatures from a comfortable forty degrees to negative ten within twenty-four hours. When roads freeze, watch for black ice — a nearly invisible layer of ice on pavement that is responsible for countless accidents every winter. Sleet, which is a mix of rain and ice pellets, makes driving extremely dangerous. On overcast winter mornings after precipitation, always assume there may be black ice on bridges and shaded roads.
+
+The good news is that St. Louis also has beautiful partly cloudy spring days with temperatures in the low seventies. Those are the days when the whole city comes alive — barbecues, bike rides, and block parties everywhere.`
+  },
+  {
+    id: 'school',
+    title: 'Understanding American Schools',
+    level: 'Intermediate',
+    cat: 'School',
+    keywords: ['GPA','syllabus','office hours','tuition','financial aid','semester','internship','credit hour','commencement','extracurricular'],
+    body: `The American education system works very differently from the systems in India, and understanding how it operates will help you and your family navigate it with confidence.
+
+In American schools, a student's academic performance is tracked using a GPA — a Grade Point Average — on a scale from zero to four point zero. A 4.0 means all A's and is considered outstanding. Most universities require a GPA of at least 3.0 for academic standing, and competitive graduate programs often require 3.5 or higher.
+
+At the start of every class, your professor will hand out a syllabus. This document is critical — it contains the entire semester schedule, all assignment due dates, exam dates, grading criteria, and the professor's contact information. Read it carefully and save it. Missing a deadline because you did not read the syllabus is not accepted as an excuse at American universities.
+
+If you are struggling in a course, visit your professor during office hours. These are scheduled times — usually one to two hours per week — when the professor sits in their office specifically to help students. American professors genuinely appreciate students who seek help proactively. It shows initiative and seriousness.
+
+One of the biggest financial concerns for students is tuition. American university tuition can range from eight thousand dollars per year at a community college to over sixty thousand at a private university. Apply for financial aid through the FAFSA every year — many immigrants are surprised to find they qualify for grants and subsidized loans.
+
+Each academic year is divided into two semesters. During a four-year bachelor's degree you must complete approximately one hundred twenty credit hours of coursework. Beyond academics, college in America is about extracurricular activities — clubs, sports, student government, and community service. These activities matter enormously for graduate school applications and early career opportunities.
+
+Many students complete an internship between their junior and senior year. A paid internship at a good company can be a launching pad for your entire career. The final graduation ceremony, called commencement, is a proud milestone for the entire family.`
+  }
+];
+
+let currentPassageId = null;
+const tooltip = document.getElementById('tooltip');
+
+// Build passage nav
+const passageNav = document.getElementById('passage-nav');
+PASSAGES.forEach((p, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'pnav-btn' + (i === 0 ? ' active' : '');
+  btn.innerHTML = `${p.cat === 'Everyday Life' ? '🏠' : p.cat === 'Tech & Work' ? '💻' : p.cat === 'Medical' ? '🏥' : p.cat === 'Driving' ? '🚗' : p.cat === 'Finance' ? '💰' : p.cat === 'Idioms' ? '💬' : p.cat === 'Weather' ? '🌦️' : '🎓'} ${p.title.split(' ').slice(0,3).join(' ')}...`;
+  btn.onclick = () => {
+    document.querySelectorAll('.pnav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadPassage(p.id);
+  };
+  passageNav.appendChild(btn);
+});
+
+function getWordData(word) {
+  const clean = word.toLowerCase().replace(/[^a-z\s-]/g,'');
+  return VOCAB.find(v => v.word.toLowerCase() === clean || clean.includes(v.word.toLowerCase().split(' ')[0]));
+}
+
+function highlightText(text, keywords) {
+  let result = text;
+  // Sort keywords by length descending to avoid partial replacements
+  const sorted = [...keywords].sort((a,b) => b.length - a.length);
+  sorted.forEach(kw => {
+    const vocab = VOCAB.find(v => v.word.toLowerCase() === kw.toLowerCase());
+    if (!vocab) return;
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp('\\b(' + escaped + ')\\b', 'gi');
+    result = result.replace(regex, (match) =>
+      `<span class="kw" data-id="${vocab.id}" onclick="handleKwClick(this)" onmouseenter="showTooltip(event,this)" onmouseleave="hideTooltip()">${match}</span>`
+    );
+  });
+  return result.replace(/\n\n/g, '</p><p style="margin-top:1.1rem">');
+}
+
+function loadPassage(id) {
+  const p = PASSAGES.find(x => x.id === id);
+  if (!p) return;
+  currentPassageId = id;
+  const highlighted = highlightText(p.body, p.keywords);
+  document.getElementById('passage-area').innerHTML = `
+    <div class="passage-title">${p.title}</div>
+    <div class="passage-meta">
+      <span class="badge badge-blue">${p.level}</span>
+      <span class="badge badge-teal">${p.cat}</span>
+      <span style="color:var(--text3)">${p.keywords.length} vocabulary words highlighted</span>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:1.5rem;flex-wrap:wrap">
+      <button class="read-all-btn" id="read-all-btn" onclick="readAloud()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+        Read entire passage aloud
+      </button>
+      <button class="read-all-btn" onclick="stopReading()" style="background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:var(--red)">
+        ■ Stop
+      </button>
+    </div>
+    <div class="passage-body"><p>${highlighted}</p></div>`;
+
+  // Glossary
+  const glossary = p.keywords.map(kw => VOCAB.find(v => v.word.toLowerCase() === kw.toLowerCase())).filter(Boolean);
+  document.getElementById('glossary-area').innerHTML = `
+    <div style="margin-top:1.5rem">
+      <h3 style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:1rem">📖 Passage Vocabulary (${glossary.length} words)</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+        ${glossary.map(w => {
+          const c = CATS[w.cat];
+          const bid = 'gb_' + w.id;
+          return `<div class="card card-sm" style="border-left:3px solid var(--accent)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div>
+                <span style="font-size:15px;font-weight:700;color:var(--text)">${w.word}</span>
+                <span style="font-size:12px;color:var(--text3);font-style:italic;margin-left:6px">${w.ph}</span>
+              </div>
+              <button class="speak-btn" id="${bid}" onclick="Speech.speak('${w.word.replace(/'/g,"\\'")}', document.getElementById('${bid}'))">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+              </button>
+            </div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.4">${w.def}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function handleKwClick(el) {
+  const vocab = VOCAB.find(v => v.id === el.dataset.id);
+  if (!vocab) return;
+  document.querySelectorAll('.kw.playing').forEach(k => k.classList.remove('playing'));
+  el.classList.add('playing');
+  Speech.speak(vocab.word + '. ' + vocab.def, null);
+  setTimeout(() => el.classList.remove('playing'), 3000);
+}
+
+function showTooltip(event, el) {
+  const vocab = VOCAB.find(v => v.id === el.dataset.id);
+  if (!vocab) return;
+  const c = CATS[vocab.cat];
+  tooltip.innerHTML = `
+    <div class="tt-word">${vocab.word}</div>
+    <div class="tt-ph">${vocab.ph}</div>
+    <span class="badge ${c.color} tt-pos">${vocab.pos}</span>
+    <div class="tt-def">${vocab.def}</div>`;
+  tooltip.classList.add('show');
+  positionTooltip(event);
+}
+
+function hideTooltip() { tooltip.classList.remove('show'); }
+
+function positionTooltip(e) {
+  const t = tooltip;
+  t.style.display = 'block';
+  let x = e.clientX + 12, y = e.clientY + 12;
+  if (x + 300 > window.innerWidth) x = e.clientX - 310;
+  if (y + 120 > window.innerHeight) y = e.clientY - 130;
+  t.style.left = x + 'px';
+  t.style.top = y + 'px';
+}
+
+document.addEventListener('mousemove', e => {
+  if (tooltip.classList.contains('show')) positionTooltip(e);
+});
+
+function readAloud() {
+  const p = PASSAGES.find(x => x.id === currentPassageId);
+  if (!p) return;
+  Speech.speak(p.body);
+}
+
+function stopReading() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+}
+
+// Load first passage
+loadPassage(PASSAGES[0].id);
+updateNavBadges();
+</script>
+</body>
+</html>
